@@ -32,6 +32,7 @@ class VideoTransformTrack(VideoStreamTrack):
         self.counter += 1
 
         if self.transform == 'cartoon':
+            print(type(frame))
             img = frame.to_ndarray(format='bgr24')
 
             # prepare color
@@ -79,42 +80,37 @@ class VideoTransformTrack(VideoStreamTrack):
             new_frame.time_base = frame.time_base
             return new_frame
         elif self.transform == 'facedetect':
-            img = frame.to_ndarray(format='bgr24')
-            faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-            #img = Image.open(BytesIO(image))
-            #img_cv2 = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
-            #gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            try:
 
-            # prepare color
-            img_color = cv2.pyrDown(cv2.pyrDown(img))
-            for _ in range(6):
-                img_color = cv2.bilateralFilter(img_color, 9, 9, 7)
-            img_color = cv2.pyrUp(cv2.pyrUp(img_color))
+                faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+                img = frame.to_ndarray(format='bgr24')
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                # print(type(gray))
+                faces = faceCascade.detectMultiScale(
+                    gray,
+                    scaleFactor=1.1,
+                    minNeighbors=5,
+                    minSize=(30, 30),
+                    flags=cv2.CASCADE_SCALE_IMAGE
+                )
+                print(faces)
 
-            # prepare edges
-            img_edges = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+                # Draw a rectangle around the faces
+                for (x, y, w, h) in faces:
+                    cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                # img = frame.to_ndarray(format='bgr24')
+                # print(type(img))
 
-            # faces = faceCascade.detectMultiScale(
-            #     gray,
-            #     scaleFactor=1.1,
-            #     minNeighbors=5,
-            #     minSize=(30, 30),
-            #     flags=cv2.CASCADE_SCALE_IMAGE
-            # )
-            # print(faces)
-            # for (x, y, w, h) in faces:
-            #     cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-            # rebuild a VideoFrame, preserving timing information
-            new_frame = VideoFrame.from_ndarray(img_edges, format='bgr24')
-            new_frame.pts = frame.pts
-            new_frame.time_base = frame.time_base
-            # try:
-            #     print(faces.tolist())
-            #     return faces.tolist()
-            #     # return [[10, 50, 30, 400]]
-            # except:
-            #     return []
+                # rebuild a VideoFrame, preserving timing information
+                new_frame = VideoFrame.from_ndarray(img, format='bgr24')
+                #new_frame=frame
+                new_frame.pts = frame.pts
+                new_frame.time_base = frame.time_base
+                return new_frame
+            except Exception as e:
+                print("error",e)
+                return frame
             return new_frame
         else:
             return frame
