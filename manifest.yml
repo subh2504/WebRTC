@@ -1,0 +1,11 @@
+---
+applications:
+- name: ainocular-webrtc
+  memory: 1GB
+  disk_quota: 2GB
+  instances: 1
+  random-route: false
+  stack: cflinuxfs3
+  buildpacks:
+    - https://github.com/cloudfoundry/python-buildpack
+  command: python app.py
